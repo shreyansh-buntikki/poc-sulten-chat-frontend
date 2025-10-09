@@ -2,6 +2,7 @@ import SendIcon from "@mui/icons-material/Send";
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   IconButton,
   Paper,
@@ -258,9 +259,7 @@ const UserResponse = () => {
 
   const generateEmbeddings = useMutation({
     mutationFn: () =>
-      axios.post(
-        `${API_URL}/api/user/${username}/ollama/generate-embeddings`
-      ),
+      axios.post(`${API_URL}/api/user/${username}/ollama/generate-embeddings`),
     onError: () => {
       toast.error("Something went wrong...");
     },
@@ -326,17 +325,30 @@ const UserResponse = () => {
       </Paper>
       <Paper elevation={2} sx={{ p: 2 }}>
         <Typography variant="body1" gutterBottom color="primary">
-          Generate Embeddings (this is a time consuming and heavy operation, DO
-          NOT OVERUSE)
+          Generate Embeddings (before starting a chat, please generate
+          embeddings once)
+          {generateEmbeddings.isPending && (
+            <>
+              <br />
+              <span style={{ color: "red", fontStyle: "italic" }}>
+                Do not try to start a chat, please wait for the embeddings to be
+                generated
+              </span>
+            </>
+          )}
         </Typography>
-        <Button
-          variant="contained"
-          disabled={generateEmbeddings.isPending}
-          color="primary"
-          onClick={() => generateEmbeddings.mutate()}
-        >
-          Generate Embeddings
-        </Button>
+        {generateEmbeddings.isPending ? (
+          <CircularProgress size={20} />
+        ) : (
+          <Button
+            variant="contained"
+            disabled={generateEmbeddings.isPending}
+            color="primary"
+            onClick={() => generateEmbeddings.mutate()}
+          >
+            Generate Embeddings
+          </Button>
+        )}
       </Paper>
 
       <Paper elevation={2} sx={{ p: 2 }}>
