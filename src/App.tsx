@@ -24,6 +24,8 @@ import { toast, ToastContainer } from "react-toastify";
 import { Route, Routes, useParams } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "./config";
+import ReactMarkdown from 'react-markdown';
+
 
 interface Message {
   text: string;
@@ -188,7 +190,7 @@ const ChatContainer = () => {
                 flexShrink: 0,
               }}
             >
-              <Box>{msg.text}</Box>
+              <Box><ReactMarkdown>{msg.text}</ReactMarkdown></Box>
               <Box
                 sx={{
                   fontSize: "0.75rem",
