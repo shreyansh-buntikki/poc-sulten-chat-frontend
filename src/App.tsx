@@ -10,7 +10,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import { SearchUser } from "./components/SearchUser";
 import {
@@ -62,7 +62,7 @@ function App() {
               flexShrink: 0,
             }}
           >
-            Chatbot Playground
+            Sulten Chatbot Playground
           </Typography>
           <ToastContainer position="top-center" />
           <Box sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
@@ -95,6 +95,29 @@ const ChatContainer = () => {
       toast.error("Something went wrong...");
     },
   });
+
+  const getChatHistory = useQuery({
+    queryKey: ["chatHistory", username],
+    queryFn: () => axios.get(`${API_URL}/api/ollama/${username}/history`),
+    enabled: !!username && messages.length === 0,
+  });
+
+  useEffect(() => {
+    if (getChatHistory.isLoading) {
+      return;
+    }
+    if (getChatHistory.data) {
+      const chatHistory = getChatHistory.data.data
+        .previousMessages as IChatHistory[];
+      setMessages(
+        chatHistory.map((item) => ({
+          text: item.kwargs.content,
+          timestamp: new Date(),
+          aiResponse: item.id.includes("HumanMessage"),
+        }))
+      );
+    }
+  }, [getChatHistory.data?.data, ]);
 
   const handleSendMessage = useCallback(() => {
     if (message.trim()) {
@@ -144,6 +167,11 @@ const ChatContainer = () => {
             display: "flex",
             flexDirection: "column",
             gap: 1,
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
           }}
         >
           {messages.map((msg, index) => (
@@ -252,6 +280,11 @@ const ChatContainer = () => {
 
 const UserResponse = () => {
   const { username } = useParams();
+  const [userRecipesLimit, setUserRecipesLimit] = useState(10);
+  const [likedRecipesLimit, setLikedRecipesLimit] = useState(10);
+  const [userRecipesSearch, setUserRecipesSearch] = useState("");
+  const [likedRecipesSearch, setLikedRecipesSearch] = useState("");
+
   const { data: user, isLoading } = useQuery({
     queryKey: ["user", username],
     queryFn: () => axios.get(`${API_URL}/api/user/${username}`),
@@ -269,6 +302,22 @@ const UserResponse = () => {
     },
   });
   const userData = user?.data as UserResponse;
+
+  const filteredUserRecipes = useMemo(() => {
+    if (!userData?.userRecipes) return [];
+    return userData.userRecipes
+      .filter((item) => item.status !== "draft")
+      .filter((recipe) =>
+        recipe.name.toLowerCase().includes(userRecipesSearch.toLowerCase())
+      );
+  }, [userData?.userRecipes, userRecipesSearch]);
+
+  const filteredLikedRecipes = useMemo(() => {
+    if (!userData?.likedRecipes) return [];
+    return userData.likedRecipes.filter((recipe) =>
+      recipe.name.toLowerCase().includes(likedRecipesSearch.toLowerCase())
+    );
+  }, [userData?.likedRecipes, likedRecipesSearch]);
 
   if (isLoading) {
     return (
@@ -352,30 +401,62 @@ const UserResponse = () => {
       </Paper>
 
       <Paper elevation={2} sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom color="primary">
-          My Recipes ({userData.userRecipes.length})
-        </Typography>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography variant="h6" color="primary">
+            My Recipes (
+            {
+              userData.userRecipes.filter((item) => item.status !== "draft")
+                .length
+            }
+            )
+          </Typography>
+          <TextField
+            size="small"
+            placeholder="Search recipes..."
+            value={userRecipesSearch}
+            onChange={(e) => setUserRecipesSearch(e.target.value)}
+            sx={{ width: 200 }}
+          />
+        </Stack>
         {userData.userRecipes.filter((item) => item.status !== "draft").length >
         0 ? (
           <Stack direction="column" gap={1}>
-            {userData.userRecipes
-              .filter((item) => item.status !== "draft")
-              .map((recipe) => (
-                <Box
-                  key={recipe.id}
-                  sx={{ p: 1, bgcolor: "#f5f5f5", borderRadius: 1 }}
-                >
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    {recipe.name}
-                  </Typography>
+            {filteredUserRecipes.slice(0, userRecipesLimit).map((recipe) => (
+              <Box
+                key={recipe.id}
+                sx={{ p: 1, bgcolor: "#f5f5f5", borderRadius: 1 }}
+              >
+                <Typography variant="subtitle2" fontWeight="bold">
+                  {recipe.name}
+                </Typography>
 
-                  <Typography variant="caption" color="text.secondary">
-                    Difficulty: {recipe.difficulty} | Servings:{" "}
-                    {recipe.servings} | Prep: {recipe.prepTime}min | Cook:{" "}
-                    {recipe.cookTime}min
-                  </Typography>
-                </Box>
-              ))}
+                <Typography variant="caption" color="text.secondary">
+                  Difficulty: {recipe.difficulty} | Servings: {recipe.servings}{" "}
+                  | Cook: {recipe.cookTime}min
+                </Typography>
+              </Box>
+            ))}
+            {filteredUserRecipes.length > userRecipesLimit && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setUserRecipesLimit((prev) => prev + 10)}
+                sx={{ mt: 1 }}
+              >
+                Show More ({filteredUserRecipes.length - userRecipesLimit}{" "}
+                remaining)
+              </Button>
+            )}
+            {filteredUserRecipes.length === 0 && userRecipesSearch && (
+              <Typography color="text.secondary" align="center" py={2}>
+                No recipes found matching "{userRecipesSearch}"
+              </Typography>
+            )}
           </Stack>
         ) : (
           <Typography color="text.secondary">No recipes created yet</Typography>
@@ -383,12 +464,26 @@ const UserResponse = () => {
       </Paper>
 
       <Paper elevation={2} sx={{ p: 2 }}>
-        <Typography variant="h6" gutterBottom color="primary">
-          Liked Recipes ({userData.likedRecipes.length})
-        </Typography>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          mb={2}
+        >
+          <Typography variant="h6" color="primary">
+            Liked Recipes ({userData.likedRecipes.length})
+          </Typography>
+          <TextField
+            size="small"
+            placeholder="Search recipes..."
+            value={likedRecipesSearch}
+            onChange={(e) => setLikedRecipesSearch(e.target.value)}
+            sx={{ width: 200 }}
+          />
+        </Stack>
         {userData.likedRecipes.length > 0 ? (
           <Stack direction="column" gap={1}>
-            {userData.likedRecipes.map((recipe) => (
+            {filteredLikedRecipes.slice(0, likedRecipesLimit).map((recipe) => (
               <Box
                 key={recipe.id}
                 sx={{ p: 1, bgcolor: "#f5f5f5", borderRadius: 1 }}
@@ -403,6 +498,22 @@ const UserResponse = () => {
                 </Typography>
               </Box>
             ))}
+            {filteredLikedRecipes.length > likedRecipesLimit && (
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => setLikedRecipesLimit((prev) => prev + 10)}
+                sx={{ mt: 1 }}
+              >
+                Show More ({filteredLikedRecipes.length - likedRecipesLimit}{" "}
+                remaining)
+              </Button>
+            )}
+            {filteredLikedRecipes.length === 0 && likedRecipesSearch && (
+              <Typography color="text.secondary" align="center" py={2}>
+                No recipes found matching "{likedRecipesSearch}"
+              </Typography>
+            )}
           </Stack>
         ) : (
           <Typography color="text.secondary">No liked recipes yet</Typography>
@@ -448,5 +559,16 @@ interface IRecipe {
   deletedAt: null | string;
   private: boolean;
   searchVector: null | string;
+}
+
+interface IChatHistory {
+  lc: number;
+  type: string;
+  id: string[];
+  kwargs: {
+    content: string;
+    additional_kwargs: Record<string, any>;
+    response_metadata: Record<string, any>;
+  };
 }
 export default App;
