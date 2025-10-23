@@ -2,7 +2,6 @@ import SendIcon from "@mui/icons-material/Send";
 import {
   Box,
   Button,
-  CircularProgress,
   Divider,
   IconButton,
   MenuItem,
@@ -10,23 +9,23 @@ import {
   Select,
   Stack,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import "./App.css";
-import { SearchUser } from "./components/SearchUser";
 import {
   QueryClient,
   QueryClientProvider,
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
-import "react-toastify/dist/ReactToastify.css";
-import { toast, ToastContainer } from "react-toastify";
-import { Route, Routes, useParams } from "react-router-dom";
 import axios from "axios";
-import { API_URL } from "./config";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { Route, Routes, useParams } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import "./App.css";
+import { SearchUser } from "./components/SearchUser";
+import { API_URL } from "./config";
 
 interface Message {
   text: string;
@@ -295,17 +294,17 @@ const UserResponse = () => {
     queryFn: () => axios.get(`${API_URL}/api/user/${username}`),
   });
 
-  const generateEmbeddings = useMutation({
-    mutationFn: () =>
-      axios.post(`${API_URL}/api/user/${username}/ollama/generate-embeddings`),
-    onError: () => {
-      toast.error("Something went wrong...");
-    },
-    onSuccess: (res) => {
-      toast.success(`Processed: ${res.data.processed}`);
-      toast.error(`Error: ${res.data.errors}`);
-    },
-  });
+  // const generateEmbeddings = useMutation({
+  //   mutationFn: () =>
+  //     axios.post(`${API_URL}/api/user/${username}/ollama/generate-embeddings`),
+  //   onError: () => {
+  //     toast.error("Something went wrong...");
+  //   },
+  //   onSuccess: (res) => {
+  //     toast.success(`Processed: ${res.data.processed}`);
+  //     toast.error(`Error: ${res.data.errors}`);
+  //   },
+  // });
   const userData = user?.data as UserResponse;
 
   const filteredUserRecipes = useMemo(() => {
