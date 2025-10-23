@@ -150,7 +150,6 @@ const ChatContainer = () => {
         overflow: "hidden",
       }}
     >
-      {/* Chat Container */}
       <Box
         sx={{
           flex: 1,
