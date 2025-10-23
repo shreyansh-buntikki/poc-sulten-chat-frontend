@@ -5,7 +5,9 @@ import {
   CircularProgress,
   Divider,
   IconButton,
+  MenuItem,
   Paper,
+  Select,
   Stack,
   TextField,
   Typography,
@@ -24,8 +26,7 @@ import { toast, ToastContainer } from "react-toastify";
 import { Route, Routes, useParams } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "./config";
-import ReactMarkdown from 'react-markdown';
-
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   text: string;
@@ -119,7 +120,7 @@ const ChatContainer = () => {
         }))
       );
     }
-  }, [getChatHistory.data?.data, ]);
+  }, [getChatHistory.data?.data]);
 
   const handleSendMessage = useCallback(() => {
     if (message.trim()) {
@@ -189,7 +190,9 @@ const ChatContainer = () => {
                 flexShrink: 0,
               }}
             >
-              <Box><ReactMarkdown>{msg.text}</ReactMarkdown></Box>
+              <Box>
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+              </Box>
               <Box
                 sx={{
                   fontSize: "0.75rem",
@@ -280,6 +283,7 @@ const ChatContainer = () => {
 };
 
 const UserResponse = () => {
+  const [selectedModel, setSelectedModel] = useState("gemini");
   const { username } = useParams();
   const [userRecipesLimit, setUserRecipesLimit] = useState(10);
   const [likedRecipesLimit, setLikedRecipesLimit] = useState(10);
@@ -374,7 +378,7 @@ const UserResponse = () => {
         </Stack>
       </Paper>
       <Paper elevation={2} sx={{ p: 2 }}>
-        <Typography variant="body1" gutterBottom color="primary">
+        {/* <Typography variant="body1" gutterBottom color="primary">
           Generate Embeddings (before starting a chat, please generate
           embeddings once)
           {generateEmbeddings.isPending && (
@@ -398,7 +402,29 @@ const UserResponse = () => {
           >
             Generate Embeddings
           </Button>
-        )}
+        )} */}
+        <Typography variant="body1" gutterBottom color="primary">
+          Select Model
+        </Typography>
+
+        <Select
+          fullWidth
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+        >
+          <MenuItem key="gemini" value="gemini">
+            Gemini
+          </MenuItem>
+          <MenuItem key="claude" value="claude">
+            Claude
+          </MenuItem>
+          <MenuItem key="openai" value="openai">
+            OpenAI
+          </MenuItem>
+          <MenuItem key="grok" value="grok">
+            Grok
+          </MenuItem>
+        </Select>
       </Paper>
 
       <Paper elevation={2} sx={{ p: 2 }}>
