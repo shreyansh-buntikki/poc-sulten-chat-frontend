@@ -9,7 +9,7 @@ import {
   Select,
   Stack,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import {
   QueryClient,
@@ -83,18 +83,22 @@ const ChatContainer = () => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const { username } = useParams();
+  const [selectedModel, setSelectedModel] = useState("gemini");
 
   const askAiMutation = useMutation({
     mutationFn: (text: string) =>
       axios.post(`${API_URL}/api/ollama/${username}/chat`, {
         message: text,
+        model: selectedModel,
       }),
     onSuccess: (res) => {
       const message = res.data.response;
       setMessages([...messages, { text: message, timestamp: new Date() }]);
     },
     onError: () => {
-      toast.error("Something went wrong...");
+      toast.error(
+        "Something went wrong..., Model overloaded, please try again later or select a different model"
+      );
     },
   });
 
@@ -275,14 +279,22 @@ const ChatContainer = () => {
           overflowY: "auto",
         }}
       >
-        <UserResponse />
+        <UserResponse
+          selectedModel={selectedModel}
+          setSelectedModel={setSelectedModel}
+        />
       </Box>
     </Stack>
   );
 };
 
-const UserResponse = () => {
-  const [selectedModel, setSelectedModel] = useState("gemini");
+const UserResponse = ({
+  selectedModel,
+  setSelectedModel,
+}: {
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
+}) => {
   const { username } = useParams();
   const [userRecipesLimit, setUserRecipesLimit] = useState(10);
   const [likedRecipesLimit, setLikedRecipesLimit] = useState(10);
@@ -351,7 +363,7 @@ const UserResponse = () => {
 
   return (
     <Stack direction="column" gap={3} width="100%">
-      <Paper elevation={2} sx={{ p: 2 }}>
+      {/* <Paper elevation={2} sx={{ p: 2 }}>
         <Typography variant="h6" gutterBottom color="primary">
           User Details
         </Typography>
@@ -375,7 +387,7 @@ const UserResponse = () => {
             <strong>Tag:</strong> {userData.user.tag}
           </Typography>
         </Stack>
-      </Paper>
+      </Paper> */}
       <Paper elevation={2} sx={{ p: 2 }}>
         {/* <Typography variant="body1" gutterBottom color="primary">
           Generate Embeddings (before starting a chat, please generate
@@ -420,8 +432,8 @@ const UserResponse = () => {
           <MenuItem key="openai" value="openai">
             OpenAI
           </MenuItem>
-          <MenuItem key="grok" value="grok">
-            Grok
+          <MenuItem key="groq" value="groq">
+            Groq
           </MenuItem>
         </Select>
       </Paper>
