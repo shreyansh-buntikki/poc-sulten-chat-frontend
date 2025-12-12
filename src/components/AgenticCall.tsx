@@ -28,10 +28,10 @@ const pulse = keyframes`
   50% { opacity: 0.7; transform: scale(1.05); }
 `;
 
-const wave = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-`;
+// const wave = keyframes`
+//   0%, 100% { transform: translateY(0); }
+//   50% { transform: translateY(-8px); }
+// `;
 
 const shimmer = keyframes`
   0% { background-position: -1000px 0; }
@@ -57,7 +57,7 @@ export const AgenticCall = () => {
   const [transcriptLines, setTranscriptLines] = useState<
     Array<{ role: string; text: string }>
   >([]);
-  const [recipes, setRecipes] = useState<any[]>([]);
+  // const [recipes, setRecipes] = useState<any[]>([]);
 
   const vapiRef = useRef<any | null>(null);
   const isStartedRef = useRef(false);
@@ -213,7 +213,7 @@ export const AgenticCall = () => {
             json = { recipes: [], context: "", noResults: true, error: true };
           }
 
-          setRecipes(json.recipes ?? []);
+          // setRecipes(json.recipes ?? []);
 
           const vapi = vapiRef.current;
           if (vapi) {
