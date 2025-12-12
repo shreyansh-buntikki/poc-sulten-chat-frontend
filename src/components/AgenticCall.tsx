@@ -9,44 +9,15 @@ import {
   Paper,
   Stack,
   Typography,
-  Fade,
-  Grow,
-  Zoom,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import Vapi from "@vapi-ai/web";
-import { keyframes } from "@mui/system";
 
 const VapiApiKey = import.meta.env.VITE_VAPI_API_KEY;
 const VapiAssistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
 
 const RECIPE_TOOL_ENDPOINT = "/api/vapi/get-recipes";
-
-const pulse = keyframes`
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.05); }
-`;
-
-// const wave = keyframes`
-//   0%, 100% { transform: translateY(0); }
-//   50% { transform: translateY(-8px); }
-// `;
-
-const shimmer = keyframes`
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
-`;
-
-const glow = keyframes`
-  0%, 100% { box-shadow: 0 0 20px rgba(33, 150, 243, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(33, 150, 243, 0.6); }
-`;
-
-const slideUp = keyframes`
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-`;
 
 export const AgenticCall = () => {
   const { username } = useParams();
@@ -61,6 +32,7 @@ export const AgenticCall = () => {
 
   const vapiRef = useRef<any | null>(null);
   const isStartedRef = useRef(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const toggleMic = async () => {
     if (micEnabled) {
@@ -312,7 +284,10 @@ export const AgenticCall = () => {
     }
   };
 
-  const isSpeaking = status.includes("speaking") || status.includes("Assistant speaking");
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [transcriptLines]);
 
   return (
     <Box
@@ -324,233 +299,155 @@ export const AgenticCall = () => {
         p: 3,
       }}
     >
-      <Fade in timeout={800}>
-        <Paper
-          elevation={24}
-          sx={{
-            width: 480,
-            maxWidth: "100%",
-            p: 4,
-            borderRadius: 4,
-            background: "linear-gradient(to bottom, #ffffff 0%, #f8f9fa 100%)",
-            position: "relative",
-            overflow: "hidden",
-            "&::before": {
-              content: '""',
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 6,
-              background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-            },
-          }}
-        >
-          <Stack spacing={3}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
+      <Paper
+        elevation={3}
+        sx={{
+          width: 480,
+          maxWidth: "100%",
+          p: 3,
+          borderRadius: 2,
+        }}
+      >
+        <Stack spacing={2}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Box>
+              <Typography variant="h6" fontWeight={600}>
+                Agentic Call
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {username ? `User: ${username}` : "Ready to connect"}
+              </Typography>
+            </Box>
+            <Chip
+              label={callActive ? "LIVE" : "IDLE"}
+              color={callActive ? "success" : "default"}
+              size="small"
+            />
+          </Stack>
+
+          <Paper
+            variant="outlined"
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: "#fafafa",
+              display: "flex",
+              flexDirection: "column",
+              height: 300,
+            }}
+          >
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+              Status: {status}
+            </Typography>
+
+            <Box
+              sx={{
+                flex: 1,
+                overflowY: "auto",
+                overflowX: "hidden",
+                pr: 1,
+                "&::-webkit-scrollbar": {
+                  width: "6px",
+                },
+                "&::-webkit-scrollbar-track": {
+                  background: "#f1f1f1",
+                  borderRadius: "3px",
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  background: "#888",
+                  borderRadius: "3px",
+                  "&:hover": {
+                    background: "#555",
+                  },
+                },
+              }}
             >
-              <Box>
-                <Typography
-                  variant="h5"
-                  fontWeight={700}
-                  sx={{
-                    background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                  }}
-                >
-                  Agentic Call
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {username ? `Connected as ${username}` : "Ready to connect"}
-                </Typography>
-              </Box>
-              <Zoom in timeout={500}>
-                <Chip
-                  label={callActive ? "● LIVE" : "IDLE"}
-                  color={callActive ? "success" : "default"}
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-                    animation: callActive ? `${pulse} 2s ease-in-out infinite` : "none",
-                  }}
-                />
-              </Zoom>
-            </Stack>
-
-            <Grow in timeout={600}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
-                  border: "1px solid rgba(0,0,0,0.05)",
-                  position: "relative",
-                  overflow: "hidden",
-                }}
-              >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
-                    animation: isSpeaking ? `${shimmer} 2s infinite` : "none",
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  fontWeight={600}
-                  sx={{ textTransform: "uppercase", letterSpacing: 1 }}
-                >
-                  Status
-                </Typography>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  sx={{
-                    mt: 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                  }}
-                >
-                  {isSpeaking && (
+              <Stack spacing={1}>
+                {transcriptLines.length === 0 ? (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ textAlign: "center", py: 2 }}
+                  >
+                    No messages yet
+                  </Typography>
+                ) : (
+                  transcriptLines.map((t, i) => (
                     <Box
+                      key={i}
                       sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: "50%",
-                        bgcolor: "#4caf50",
-                        animation: `${pulse} 1s ease-in-out infinite`,
+                        display: "flex",
+                        justifyContent:
+                          t.role === "user" ? "flex-end" : "flex-start",
                       }}
-                    />
-                  )}
-                  {status}
-                </Typography>
-
-                <Box sx={{ mt: 2, maxHeight: 200, overflowY: "auto" }}>
-                  {transcriptLines.slice(-6).map((t, i) => (
-                    <Fade in key={i} timeout={400}>
-                      <Box
+                    >
+                      <Paper
+                        elevation={0}
                         sx={{
-                          mb: 1.5,
-                          display: "flex",
-                          justifyContent: t.role === "user" ? "flex-end" : "flex-start",
-                          animation: `${slideUp} 0.4s ease-out`,
+                          px: 2,
+                          py: 1,
+                          borderRadius: 2,
+                          maxWidth: "75%",
+                          bgcolor:
+                            t.role === "user" ? "primary.main" : "grey.200",
+                          color: t.role === "user" ? "white" : "text.primary",
                         }}
                       >
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            maxWidth: "80%",
-                            background:
-                              t.role === "user"
-                                ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                                : "#ffffff",
-                            color: t.role === "user" ? "#ffffff" : "#000000",
-                          }}
+                        <Typography
+                          variant="caption"
+                          sx={{ opacity: 0.8, display: "block", mb: 0.5 }}
                         >
-                          <Typography variant="caption" fontWeight={700} sx={{ opacity: 0.8 }}>
-                            {t.role === "user" ? "You" : "Assistant"}
-                          </Typography>
-                          <Typography variant="body2" sx={{ mt: 0.5 }}>
-                            {t.text}
-                          </Typography>
-                        </Paper>
-                      </Box>
-                    </Fade>
-                  ))}
-                </Box>
-              </Paper>
-            </Grow>
+                          {t.role === "user" ? "You" : "Assistant"}
+                        </Typography>
+                        <Typography variant="body2">{t.text}</Typography>
+                      </Paper>
+                    </Box>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </Stack>
+            </Box>
+          </Paper>
 
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Button
-                variant="contained"
-                startIcon={<CallIcon />}
-                onClick={startCall}
-                disabled={callActive}
-                fullWidth
-                sx={{
-                  py: 1.5,
-                  borderRadius: 3,
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  background: callActive
-                    ? "#e0e0e0"
-                    : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  boxShadow: callActive ? "none" : "0 8px 24px rgba(102, 126, 234, 0.4)",
-                  transition: "all 0.3s ease",
-                  "&:hover": {
-                    transform: callActive ? "none" : "translateY(-2px)",
-                    boxShadow: callActive ? "none" : "0 12px 32px rgba(102, 126, 234, 0.5)",
-                  },
-                }}
-              >
-                {callActive ? "Call in progress" : "Start Call"}
-              </Button>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              variant="contained"
+              startIcon={<CallIcon />}
+              onClick={startCall}
+              disabled={callActive || !micEnabled}
+              fullWidth
+            >
+              {callActive ? "Call in progress" : "Start Call"}
+            </Button>
 
-              <IconButton
-                onClick={toggleMic}
-                sx={{
-                  width: 56,
-                  height: 56,
-                  border: "3px solid",
-                  borderColor: micEnabled ? "#667eea" : "#e0e0e0",
-                  background: micEnabled
-                    ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
-                    : "#ffffff",
-                  color: micEnabled ? "#ffffff" : "#9e9e9e",
-                  transition: "all 0.3s ease",
-                  animation: micEnabled && callActive ? `${glow} 2s infinite` : "none",
-                  "&:hover": {
-                    transform: "scale(1.1)",
-                    borderColor: micEnabled ? "#764ba2" : "#bdbdbd",
-                  },
-                }}
-              >
-                {micEnabled ? <MicIcon /> : <MicOffIcon />}
-              </IconButton>
-            </Stack>
-
-            {callActive && (
-              <Zoom in timeout={400}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={endCall}
-                  fullWidth
-                  sx={{
-                    py: 1.5,
-                    borderRadius: 3,
-                    fontWeight: 700,
-                    borderWidth: 2,
-                    "&:hover": {
-                      borderWidth: 2,
-                      transform: "translateY(-2px)",
-                    },
-                  }}
-                >
-                  End Call
-                </Button>
-              </Zoom>
-            )}
+            <IconButton
+              onClick={toggleMic}
+              color={micEnabled ? "primary" : "default"}
+              sx={{
+                border: "2px solid",
+                borderColor: micEnabled ? "primary.main" : "divider",
+              }}
+            >
+              {micEnabled ? <MicIcon /> : <MicOffIcon />}
+            </IconButton>
           </Stack>
-        </Paper>
-      </Fade>
+
+          {callActive && (
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={endCall}
+              fullWidth
+            >
+              End Call
+            </Button>
+          )}
+        </Stack>
+      </Paper>
     </Box>
   );
 };
