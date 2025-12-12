@@ -14,6 +14,7 @@ import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_URL } from "../config";
+import { NGROK_HEADERS } from "../App";
 
 export const SearchUser = () => {
   const [searchUser, setSearchUser] = useState("");
@@ -31,7 +32,10 @@ export const SearchUser = () => {
 
   const searchUserQuery = useQuery({
     queryKey: ["searchUser", { debouncedSearchUser }],
-    queryFn: () => axios.get(`${API_URL}/api/user/search?user=${searchUser}`),
+    queryFn: () =>
+      axios.get(`${API_URL}/api/user/search?user=${searchUser}`, {
+        headers: NGROK_HEADERS,
+      }),
     enabled: debouncedSearchUser.length > 0,
   });
 

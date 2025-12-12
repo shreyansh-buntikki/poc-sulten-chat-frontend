@@ -20,13 +20,19 @@ import {
 import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { Route, Routes, useParams } from "react-router-dom";
+import { Route, Routes, useNavigate, useParams } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
 import { SearchUser } from "./components/SearchUser";
 import { API_URL } from "./config";
+import { AgenticCall } from "./components/AgenticCall";
 
+export const NGROK_HEADERS = {
+  "ngrok-skip-browser-warning": "69420",
+  accept: "application/json",
+  "Content-Type": "application/json",
+};
 interface Message {
   text: string;
   timestamp: Date;
@@ -71,6 +77,7 @@ function App() {
             <Routes>
               <Route path="/" element={<SearchUser />} />
               <Route path="/:username" element={<ChatContainer />} />
+              <Route path="/call/:username" element={<AgenticCall />} />
             </Routes>
           </Box>
         </Stack>
@@ -84,13 +91,20 @@ const ChatContainer = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const { username } = useParams();
   const [selectedModel, setSelectedModel] = useState("gemini");
+  const navigate = useNavigate();
 
   const askAiMutation = useMutation({
     mutationFn: (text: string) =>
-      axios.post(`${API_URL}/api/ollama/${username}/chat`, {
-        message: text,
-        model: selectedModel,
-      }),
+      axios.post(
+        `${API_URL}/api/ollama/${username}/chat`,
+        {
+          message: text,
+          model: selectedModel,
+        },
+        {
+          headers: NGROK_HEADERS,
+        }
+      ),
     onSuccess: (res) => {
       const message = res.data.response;
       setMessages([...messages, { text: message, timestamp: new Date() }]);
@@ -104,7 +118,10 @@ const ChatContainer = () => {
 
   const getChatHistory = useQuery({
     queryKey: ["chatHistory", username],
-    queryFn: () => axios.get(`${API_URL}/api/ollama/${username}/history`),
+    queryFn: () =>
+      axios.get(`${API_URL}/api/ollama/${username}/history`, {
+        headers: NGROK_HEADERS,
+      }),
     enabled: !!username && messages.length === 0,
   });
 
@@ -163,6 +180,17 @@ const ChatContainer = () => {
           bgcolor: "#f5f5f5",
         }}
       >
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{
+            margin: 2,
+            maxWidth: "200px",
+          }}
+          onClick={() => navigate(`/call/${username}`)}
+        >
+          Do agentic call
+        </Button>
         <Box
           sx={{
             flex: 1,
@@ -303,7 +331,10 @@ const UserResponse = ({
 
   const { data: user, isLoading } = useQuery({
     queryKey: ["user", username],
-    queryFn: () => axios.get(`${API_URL}/api/user/${username}`),
+    queryFn: () =>
+      axios.get(`${API_URL}/api/user/${username}`, {
+        headers: NGROK_HEADERS,
+      }),
   });
 
   // const generateEmbeddings = useMutation({
