@@ -124,6 +124,7 @@ export const AgenticCall = () => {
 
     vapi.on("message", async (message: any) => {
       try {
+        console.log({ message });
         if (message?.type === "transcript") {
           const role = message.role ?? "user";
           const text = message.transcript ?? message.text ?? "";
@@ -264,7 +265,11 @@ export const AgenticCall = () => {
       return;
     }
     try {
-      vapiRef.current.start(VapiAssistantId);
+      vapiRef.current.start(VapiAssistantId, {
+        variableValues: {
+          userId: userId,
+        }
+      });
       isStartedRef.current = true;
       setStatus("Starting call...");
     } catch (err) {
