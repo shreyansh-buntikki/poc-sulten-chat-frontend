@@ -20,6 +20,7 @@ const VapiAssistantId = import.meta.env.VITE_VAPI_ASSISTANT_ID;
 const RECIPE_TOOL_ENDPOINT = "/api/vapi/get-recipes";
 
 export const AgenticCall = () => {
+  const userId = localStorage.getItem("userid");
   const { username } = useParams();
   const [callActive, setCallActive] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
@@ -165,7 +166,7 @@ export const AgenticCall = () => {
 
           let json: any = null;
           try {
-            const resp = await fetch(RECIPE_TOOL_ENDPOINT, {
+            const resp = await fetch(`${RECIPE_TOOL_ENDPOINT}/${userId}`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
