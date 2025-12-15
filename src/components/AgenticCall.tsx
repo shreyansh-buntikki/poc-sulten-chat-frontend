@@ -38,12 +38,24 @@ export const AgenticCall = () => {
   const toggleMic = async () => {
     if (micEnabled) {
       setMicEnabled(false);
+      try {
+        vapiRef.current?.setMuted(true);
+      } catch (err) {
+        console.warn("Failed to mute mic via Vapi", err);
+      }
       setStatus(callActive ? "In call (mic muted)" : "Idle");
       return;
     }
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       setMicEnabled(true);
+      try {
+        if (callActive) {
+          vapiRef.current?.setMuted(false);
+        }
+      } catch (err) {
+        console.warn("Failed to unmute mic via Vapi", err);
+      }
       setStatus(
         callActive ? "In call (mic live)" : "Mic live (call not started)"
       );
@@ -268,7 +280,7 @@ export const AgenticCall = () => {
       vapiRef.current.start(VapiAssistantId, {
         variableValues: {
           userId: userId,
-        }
+        },
       });
       isStartedRef.current = true;
       setStatus("Starting call...");
@@ -290,7 +302,6 @@ export const AgenticCall = () => {
     }
   };
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [transcriptLines]);
