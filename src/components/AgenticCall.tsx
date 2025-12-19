@@ -35,6 +35,39 @@ export const AgenticCall = () => {
   const isStartedRef = useRef(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const addTranscriptMessage = (
+    role: string,
+    text: string,
+    transcriptType?: string
+  ) => {
+    setTranscriptLines((prev) => {
+      if (prev.length === 0) {
+        return [{ role, text }];
+      }
+      const lastLine = prev[prev.length - 1];
+      const isPartial = transcriptType === "partial";
+
+      if (lastLine.role === role) {
+        if (isPartial) {
+          return [...prev.slice(0, -1), { role, text }];
+        } else {
+          const lastText = lastLine.text.trim();
+          const newText = text.trim();
+
+          if (lastText === newText || newText.startsWith(lastText)) {
+            return [...prev.slice(0, -1), { role, text: newText }];
+          } else {
+            return [
+              ...prev.slice(0, -1),
+              { role, text: lastText + " " + newText },
+            ];
+          }
+        }
+      }
+      return [...prev, { role, text }];
+    });
+  };
+
   const toggleMic = async () => {
     if (micEnabled) {
       setMicEnabled(false);
@@ -140,10 +173,11 @@ export const AgenticCall = () => {
         if (message?.type === "transcript") {
           const role = message.role ?? "user";
           const text = message.transcript ?? message.text ?? "";
+          const transcriptType = message.transcriptType;
           if (role === "user" && status.toLowerCase().includes("speaking")) {
             handlePossibleInterrupt(text);
           }
-          setTranscriptLines((p) => [...p, { role, text }]);
+          addTranscriptMessage(role, text, transcriptType);
           return;
         }
 
@@ -152,7 +186,7 @@ export const AgenticCall = () => {
           (message?.role === "assistant" && message?.type === "text")
         ) {
           const text = message.text ?? message.transcript ?? "";
-          setTranscriptLines((p) => [...p, { role: "assistant", text }]);
+          addTranscriptMessage("assistant", text);
           return;
         }
 
