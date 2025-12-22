@@ -96,7 +96,7 @@ const ChatContainer = () => {
   const askAiMutation = useMutation({
     mutationFn: (text: string) =>
       axios.post(
-        `${API_URL}/api/ollama/${username}/chat`,
+        `${API_URL}/api/groq/agent/search/${username}`,
         {
           message: text,
           model: selectedModel,
