@@ -27,6 +27,7 @@ import "./App.css";
 import { SearchUser } from "./components/SearchUser";
 import { API_URL } from "./config";
 import { AgenticCall } from "./components/AgenticCall";
+import { OpenaiCall } from "./components/OpenaiCall";
 
 export const NGROK_HEADERS = {
   "ngrok-skip-browser-warning": "69420",
@@ -78,6 +79,7 @@ function App() {
               <Route path="/" element={<SearchUser />} />
               <Route path="/:username" element={<ChatContainer />} />
               <Route path="/call/:username" element={<AgenticCall />} />
+              <Route path="/openai/call/:username" element={<OpenaiCall />} />
             </Routes>
           </Box>
         </Stack>
@@ -96,7 +98,7 @@ const ChatContainer = () => {
   const askAiMutation = useMutation({
     mutationFn: (text: string) =>
       axios.post(
-        `${API_URL}/api/groq/agent/search/${username}`,
+        `${API_URL}/api/openai/agent/search/${username}`,
         {
           message: text,
           model: selectedModel,
@@ -180,17 +182,28 @@ const ChatContainer = () => {
           bgcolor: "#f5f5f5",
         }}
       >
-        <Button
-          variant="contained"
-          color="primary"
-          sx={{
-            margin: 2,
-            maxWidth: "200px",
-          }}
-          onClick={() => navigate(`/call/${username}`)}
-        >
-          Do agentic call
-        </Button>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" width='100%'>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              margin: 2,
+            }}
+            onClick={() => navigate(`/call/${username}`)}
+          >
+            Do agentic call
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{
+              margin: 2,
+            }}
+            onClick={() => navigate(`/openai/call/${username}`)}
+          >
+            Do Openai agentic call
+          </Button>
+        </Stack>
         <Box
           sx={{
             flex: 1,
